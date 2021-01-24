@@ -26,20 +26,13 @@ Usage: import the module (see Jupyter notebooks for examples), or run from
     # Apply color splash to video using the last weights you trained
     python3 grape.py splash --weights=last --video=<URL or path to file>
 """
-import keras
 import os
 import sys
 import json
 import datetime
 import numpy as np
-import imgaug
 import skimage.draw
-import tensorflow as tf
-from tensorflow.compat.v1 import InteractiveSession
-import random
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
-session = InteractiveSession(config=config)
+
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../../")
 
@@ -53,35 +46,34 @@ COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 
 # Directory to save logs and model checkpoints, if not provided
 # through the command line argument --logs
-DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "samples/uvas/stuff/logs")
+DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "samples/mammography/stuff/logs")
 
 ############################################################
 #  Configurations
 ############################################################
-
 
 class TrainConfig(Config):
     """Configuration for training on the toy  dataset.
     Derives from the base Config class and overrides some values.
     """
 
-    # NUMBER OF GPUs to use. When using only a CPU, this needs to be set to 1.
-    GPU_COUNT = 1
-
     # Give the configuration a recognizable name
-    NAME = "uvas"
+    NAME = "mammography"
+
+    GPU_COUNT = 1
 
     # We use a GPU with 12GB memory, which can fit two images.
     # Adjust down if you use a smaller GPU.
     IMAGES_PER_GPU = 2
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 1  # Background + grape
+    NUM_CLASSES = 1 + 3  # Background + mammography_classes
 
-    # Number of epochs for keras train
+    # Number of epochs for training
     EPOCHS = 1
+
     # Number of training steps per epoch
-    STEPS_PER_EPOCH = 5
+    STEPS_PER_EPOCH = 100
 
     # Skip detections with < 90% confidence
     DETECTION_MIN_CONFIDENCE = 0.9
@@ -92,14 +84,17 @@ class TrainConfig(Config):
 ############################################################
 
 class GrapeDataset(utils.Dataset):
-    def load_grape(self, dataset_dir, subset):
+    
+    def load_mammography(self, dataset_dir, subset):
         """Load a subset of the grape dataset.
         dataset_dir: Root directory of the dataset.
         subset: Subset to load: train or val
         """
         
         # Add classes. We have only one class to add.
-        self.add_class("grape", 1, "grape")
+        self.add_class("mammography", 1, "benign")
+        self.add_class("mammography", 2, "malignant")
+        self.add_class("mammography", 3, "benign_without_callback")
 
         # Train or validation dataset?
         assert subset in ["train", "val"]
@@ -164,12 +159,12 @@ def train(model):
     """Train the model."""
     # Training dataset.
     dataset_train = GrapeDataset()
-    dataset_train.load_grape(args.dataset, "train")
+    dataset_train.load_mammography(args.dataset, "train")
     dataset_train.prepare()
 
     # Validation dataset
     dataset_val = GrapeDataset()
-    dataset_val.load_grape(args.dataset, "val")
+    dataset_val.load_mammography(args.dataset, "val")
     dataset_val.prepare()
 
     # Image augmentation
