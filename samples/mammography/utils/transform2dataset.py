@@ -4,6 +4,13 @@ import pandas as pd
 import os
 import cv2
 
+#Define a class dictionary with the class names and ids
+class_dic = {
+    "BENIGN" : 1,
+    "MALIGNANT" : 2,
+    "BENIGN_WITHOUT_CALLBACK" : 3
+}
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
 		description='Transform the data in the correct format to be processed')
@@ -34,9 +41,11 @@ if __name__ == "__main__":
     print("Records: ",rows)
 
     base_names = []
+    class_ids = []
 
     for row_id in range(rows):
         # Get the paths and sample name
+        class_name = str(data.loc[row_id]['class'])
         image_name = data.loc[row_id]['images']
         mask_name = data.loc[row_id]['masks']
         base_name = image_name.split("/")[0]
@@ -66,7 +75,14 @@ if __name__ == "__main__":
         # Append basenames
         base_names.append(base_name)
 
-        # Storing base_names in a .txt file
-        with open(os.path.join(args.dataset_dir,'base_names.txt'), 'a') as file:
-            for b_name in base_names:
-                file.write(b_name +"\n")
+        # Saved the class name
+        class_id = -1
+        class_id = class_dic[class_name]
+        assert class_id != -1 , "The class id is not good recognized"
+
+        class_ids.append(class_id) 
+
+    # Storing base_names in a .txt file
+    with open(os.path.join(args.dataset_dir,'base_names.txt'), 'a') as file:
+        for i, b_name in enumerate(base_names):
+            file.write(b_name + "," + class_ids[i] +"\n")

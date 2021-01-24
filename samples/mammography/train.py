@@ -32,7 +32,7 @@ import json
 import datetime
 import numpy as np
 import skimage.draw
-
+import imgaug
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../../")
 
@@ -96,32 +96,33 @@ class GrapeDataset(utils.Dataset):
         self.add_class("mammography", 2, "malignant")
         self.add_class("mammography", 3, "benign_without_callback")
 
+        # get the basenames in a list
+        file1 = open(os.path.join(dataset_dir, "base_names_" + subset + ".txt"), 'r') 
+        content = file1.readlines()
+        content = [x.strip() for x in content] 
+        
         # Train or validation dataset?
         assert subset in ["train", "val"]
         dataset_dir = os.path.join(dataset_dir, subset)
 
-        files=os.listdir(dataset_dir)
+        for line in content:
+            file_name, class_id = line.split(",")
 
-        for file in files:
-            # extract image names
-            filename, filename_ext = os.path.splitext(file)
+            image_path = os.path.join(dataset_dir,file_name + ".png")
+            image = skimage.io.imread(image_path)
+            height, width = image.shape[:2]
 
-            if filename_ext==".jpg":
+            mask_path=os.path.join(dataset_dir,filename+".npz")
 
-                image_path = os.path.join(dataset_dir,file)
-                image = skimage.io.imread(image_path)
-                height, width = image.shape[:2]
+            #print(mask_path)
 
-                mask_path=os.path.join(dataset_dir,filename+".npz")
-
-                #print(mask_path)
-
-                self.add_image(
-                    "grape",
-                    image_id=file,  # use file name as a unique image id
-                    path=image_path,
-                    width=width, height=height,
-                    mask_path=mask_path)
+            self.add_image(
+                "mammography",
+                image_id=file_name + ".png",  # use file name as a unique image id
+                path=image_path,
+                width=width, height=height,
+                mask_path=mask_path,
+                class_id=class_id)
 
 
     def load_mask(self, image_id):
@@ -140,7 +141,10 @@ class GrapeDataset(utils.Dataset):
         mask_path=image_info["mask_path"]
         mask = np.load(mask_path)['arr_0']
 
-        return mask.astype(np.bool), np.ones([mask.shape[-1]], dtype=np.int32)
+        # load the class_id
+        class_id = image_info["class_id"] 
+
+        return mask.astype(np.bool), np.array([class_id], dtype=np.int32)
 
 
     def image_reference(self, image_id):
@@ -169,6 +173,10 @@ def train(model):
 
     # Image augmentation
     # seq = imgaug.augmenters.Sequential([imgaug.augmenters.Fliplr(0.5),imgaug.augmenters.imgcorruptlike.Contrast(severity=1),imgaug.augmenters.imgcorruptlike.Brightness(severity=random.randint(1,4))])
+    # augmentation = augmentation = imgaug.augmenters.Sometimes(0.5, [
+    #             imgaug.augmenters.Fliplr(0.5),
+    #             imgaug.augmenters.GaussianBlur(sigma=(0.0, 5.0))
+    #         ])
 
     # *** This training schedule is an example. Update to your needs ***
     # Since we're using a very small dataset, and starting from

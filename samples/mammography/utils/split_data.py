@@ -53,16 +53,24 @@ if __name__ == "__main__":
         print("Content from {} to {}".format(lens[i],lens[i+1]))
         data = content[lens[i]:lens[i+1]]
         # moving data 
-        for base_name in data:
+        for line in data:
+
+            #getting the info of list
+            base_name, class_id = line.split(",")
             
             #moving images from data to train or val
-            src = os.path.join(args.dataset_dir,"data/" + base_name + ".jpg")
-            dst = os.path.join(args.dataset_dir, dirs[i] +"/" + base_name + ".jpg")
+            src = os.path.join(args.dataset_dir,"data/" + base_name + ".png")
+            dst = os.path.join(args.dataset_dir, dirs[i] +"/" + base_name + ".png")
             shutil.copy2(src,dst)
 
             #moving npz from data to train or val 
             src = os.path.join(args.dataset_dir,"data/" + base_name + ".npz")
             dst = os.path.join(args.dataset_dir, dirs[i] +"/" + base_name + ".npz")
-            shutil.copy2(src,dst) 
+            shutil.copy2(src,dst)
+
+        # creating the base_names_train.txt amd base_names_val.txt
+        with open(os.path.join(args.dataset_dir, 'base_names_' + dirs[i] + '.txt'), 'a') as file:
+            for line in data:
+                file.write(line +"\n")
 
     print("Ending the split data")
