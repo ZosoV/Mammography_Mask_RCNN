@@ -5,7 +5,7 @@ import argparse
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-		description='Get npz mask from .json')
+		description='Split datasets in train and val')
 
     parser.add_argument('--dataset_dir', required=True,
                         metavar="/path/to/dataset",
