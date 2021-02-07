@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import cv2
+import shutil
 
 #Define a class dictionary with the class names and ids
 class_dic = {
@@ -25,6 +26,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    DATA_DIR = os.path.join(args.dataset_dir, 'CBIS-DDSM')
     output_dir = os.path.join(args.dataset_dir,"data")
 
     # create important directories
@@ -54,23 +56,23 @@ if __name__ == "__main__":
         # img_0 = cv2.imread(join(DATA_DIR,image_name))
         # print("Base image shape: ", img_0.shape)
 
-        mask_0 = cv2.imread(join(DATA_DIR,mask_name))
+        mask_0 = cv2.imread(os.path.join(DATA_DIR,mask_name))
         print("Mask shape:{} Max: {} Min: {}".format(mask_0.shape,
                                                     np.amax(mask_0),
                                                     np.amin(mask_0)))
 
         # Moving the original image
-        src = os.path.join(args.dataset_dir,image_name)
+        src = os.path.join(DATA_DIR,image_name)
         dst = os.path.join(output_dir,base_name + ".png")
 
-        shutil.copy2(src,dst)
+        # shutil.copy2(src,dst)
 
         # Creating the .npz from image mask
         mask_0 = mask_0.clip(max = 1)
 
         # Compress to npz file
         compress_path = os.path.join(output_dir,base_name + ".npz")
-        np.savez_compressed(compress_path, arr_0=mask)
+        np.savez_compressed(compress_path, arr_0=mask_0)
 
         # Append basenames
         base_names.append(base_name)
@@ -85,4 +87,4 @@ if __name__ == "__main__":
     # Storing base_names in a .txt file
     with open(os.path.join(args.dataset_dir,'base_names.txt'), 'a') as file:
         for i, b_name in enumerate(base_names):
-            file.write(b_name + "," + class_ids[i] +"\n")
+            file.write(b_name + "," + str(class_ids[i]) +"\n")
