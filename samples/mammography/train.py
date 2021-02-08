@@ -112,7 +112,7 @@ class GrapeDataset(utils.Dataset):
             image = skimage.io.imread(image_path)
             height, width = image.shape[:2]
 
-            mask_path=os.path.join(dataset_dir,filename+".npz")
+            mask_path=os.path.join(dataset_dir,file_name+".npz")
 
             #print(mask_path)
 
